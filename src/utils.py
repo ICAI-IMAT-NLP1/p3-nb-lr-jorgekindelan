@@ -90,28 +90,39 @@ def evaluate_classification(predictions: torch.Tensor, labels: torch.Tensor) -> 
     Returns:
         dict: A dictionary containing the calculated metrics.
     """
-    metrics: Dict[str, float] = {"Accuracy": 0.0, "Precision": 0.0, "Recall": 0.0, "F1": 0.0}
-    # Ensure predictions and labels are on the same device
-    predictions = predictions.to(labels.device)
+    metrics: Dict[str, float] = {}
 
-    # Calculate accuracy
-    correct_predictions = (predictions == labels).sum().item()
-    total_predictions = labels.size(0)
-    metrics["Accuracy"] = correct_predictions / total_predictions
+    true_positives = torch.sum((predictions == 1) & (labels == 1)).item()
+    true_negatives = torch.sum((predictions == 0) & (labels == 0)).item()
+    false_positives = torch.sum((predictions == 1) & (labels == 0)).item()
+    false_negatives = torch.sum((predictions == 0) & (labels == 1)).item()
 
-    # Calculate precision, recall, and F1-score
-    true_positives = ((predictions == 1) & (labels == 1)).sum().item()
-    false_positives = ((predictions == 1) & (labels == 0)).sum().item()
-    false_negatives = ((predictions == 0) & (labels == 1)).sum().item()
+    # accuracy
+    accuracy = (true_positives + true_negatives) / len(labels)
+    metrics["accuracy"] = accuracy
 
-    if true_positives + false_positives > 0:
-        metrics["Precision"] = true_positives / (true_positives + false_positives)
-    if true_positives + false_negatives > 0:
-        metrics["Recall"] = true_positives / (true_positives + false_negatives)
-    if metrics["Precision"] + metrics["Recall"] > 0:
-        metrics["F1"] = 2 * (metrics["Precision"] * metrics["Recall"]) / (metrics["Precision"] + metrics["Recall"])
+    # precision
+    if true_positives + false_positives == 0:
+        precision = 0
+    else:
+        precision = true_positives / (true_positives + false_positives)
+    metrics["precision"] = precision
+
+    # recall
+    if true_positives + false_negatives == 0:
+        recall = 0
+    else:
+        recall = true_positives / (true_positives + false_negatives)
+    metrics["recall"] = recall
+
+    # F1-score
+    if precision + recall == 0:
+        f1 = 0
+    else:
+        f1 = (2 * (precision * recall)) / (precision + recall)
+    metrics["f1_score"] = f1
+
 
     return metrics
-    
 
    
